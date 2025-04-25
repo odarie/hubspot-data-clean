@@ -1,16 +1,20 @@
-require('dotenv').config()
+const hubspot = require('@hubspot/api-client')
 
-async function testAPI() {
-  const response = await fetch(`${process.env.BASE_URL}/crm/v3/objects/contacts?limit=10`, {
-    method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-        }
-  })
-  const data = await response.json()
-  console.log(`Status: ${response.status}`)
-  console.log(data)
+require('dotenv').config()
+global.log = (obj) => console.dir(obj, { depth: null, colors: true });
+
+const hubspotClient = new hubspot.Client({accessToken: process.env.ACCESS_TOKEN})
+
+const publicObjectSearchRequest = {
+  sorts: [{ propertyName: 'createdate', direction: 'DESCENDING' }],
+  properties: ['createdate', 'firstname', 'lastname'],
+  limit: 1,
+  after: 0,
 }
 
-testAPI()
+async function searchApi () {
+  const response = await hubspotClient.crm.contacts.searchApi.doSearch(publicObjectSearchRequest)
+  log(response)
+}
+
+searchApi()
