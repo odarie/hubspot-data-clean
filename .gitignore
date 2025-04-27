@@ -1,5 +1,8 @@
-# Node
+# Node.js dependencies
 node_modules/
 
-# dotenv environment variable files
+# Environment variables
 .env
+
+# Local data files
+*.json
