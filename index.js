@@ -1,7 +1,8 @@
 const fs = require('node:fs/promises')
 const hubspot = require('@hubspot/api-client');
 const phoneProperties = require('./phone-properties.js')
-const allProperties = require('./all-properties.js')
+const allProperties = require('./all-properties.js');
+const { access } = require('node:fs');
 
 require('dotenv').config()
 
@@ -12,46 +13,221 @@ const hubspotClient = new hubspot.Client({accessToken: process.env.ACCESS_TOKEN}
 
 (async () => {
   try {
-    // Retrieve all contacts from HubSpot API
-    const allContacts = await getAllContacts();
-    // Define the path where the contacts will be saved
-    const timestamp = makeTimestamp()
-    const path = `all-contacts-${timestamp}.json`
-    // Save contacts as JSON to the file
-    await writeJsonFile (path, allContacts)
-      // Read back the contacts from the file
-    const allContactsFromFile = await readJsonFile(path)
-    
-    log(`Total: ${allContactsFromFile.length}`)
-    log(allContactsFromFile[0])
-    
+
+
   } catch (err) {
-    console.log(`An error within the main process: ${err}`)
+    console.error(`An error within the main process: ${err}`)
   }
 })();
 
-// API functions
+async function getSignedUrlForPrivateFile(fileId) {
+  
+  const size = undefined
+  const expirationSeconds = undefined
+  const upscale = undefined
 
-async function getAllContacts () {
-  const allContacts = []
+  try {
+
+    const response = await hubspotClient.files.filesApi.getSignedUrl(
+      fileId, 
+      size, 
+      expirationSeconds, 
+      upscale
+    )
+    return response.url
+
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function downloadFile(url, path) {
+
+  try {
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.ACCESS_TOKEN}`
+      }
+    })
+
+    if (!response.ok) {
+      log(response)
+      throw new Error(`Download failed: ${response.status} ${response.statusText}`)
+    } 
+
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    await fs.writeFile(path, buffer)
+    return path
+
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// Iterate a paged function, save the data 
+
+async function getAllPagesOfObjects (fetchFunction) {
+  const allData = []
   let after;
 
   do {
 
-    const response = await searchContacts(100, after)
-    const { results, total} = response
-    allContacts.push(...results)
+    const response = await fetchFunction(after)
+    const { results } = response
+    allData.push(...results)
    
     after = response.paging?.next?.after
     if (after) {
+      console.log(`After: ${after}`)
       await sleep(200)
     } 
 
   } while (after)
-  return allContacts
+
+  // Define the path where the contacts will be saved
+  const functionName = fetchFunction.name
+  const path = generatePath(functionName)
+  console.log(`Path: ${path}`)
+
+  // Save contacts as JSON to the file
+  await writeJsonFile (path, allData)
+  
+  // Read and return result
+  const savedData = await readJsonFile(path)
+  log(`Total objects saved by ${functionName}: ${savedData.length}`)
+  return savedData
 }
 
-async function searchContacts (limit, after) {
+// API functions
+
+async function searchFiles(after) {
+  
+  const properties = undefined;
+  // const after = undefined;
+  const before = undefined;
+  const limit = 100;
+  const sort = undefined;
+  const ids = undefined;
+  const idLte = undefined;
+  const idGte = undefined;
+  const createdAt = undefined;
+  const createdAtLte = undefined;
+  const createdAtGte = undefined;
+  const updatedAt = undefined;
+  const updatedAtLte = undefined;
+  const updatedAtGte = undefined;
+  const name = undefined;
+  const path = undefined;
+  const parentFolderIds = undefined;
+  const size = undefined;
+  const sizeLte = undefined;
+  const sizeGte = undefined;
+  const height = undefined;
+  const heightLte = undefined;
+  const heightGte = undefined;
+  const width = undefined;
+  const widthLte = undefined;
+  const widthGte = undefined;
+  const encoding = undefined;
+  const type = undefined;
+  const extension = undefined;
+  const url = undefined;
+  const isUsableInContent = undefined;
+  const allowsAnonymousAccess = undefined;
+  const fileMd5 = undefined;
+  const expiresAt = undefined;
+  const expiresAtLte = undefined;
+  const expiresAtGte = undefined;
+
+try {
+  return await hubspotClient.files.filesApi.doSearch(properties, after, before, limit, sort, ids, idLte, idGte, createdAt, createdAtLte, createdAtGte, updatedAt, updatedAtLte, updatedAtGte, name, path, parentFolderIds, size, sizeLte, sizeGte, height, heightLte, heightGte, width, widthLte, widthGte, encoding, type, extension, url, isUsableInContent, allowsAnonymousAccess, fileMd5, expiresAt, expiresAtLte, expiresAtGte);
+} catch (e) {
+  e.message === 'HTTP request failed'
+    ? console.error(JSON.stringify(e.response, null, 2))
+    : console.error(e)
+}
+
+}
+
+async function batchReadAssociations() {
+  try {
+    const fromObjType = 'note'
+    const toObjType = 'contact'
+    return await hubspotClient.crm.associations.v4.batchApi.getPage(fromObjType, toObjType)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function searchNotes() {
+
+  const searchParams = {
+    sorts: [{ propertyName: 'createdate', direction: 'DESCENDING' }],
+    properties:['hs_timestamp', 'hs_note_body', 'hubspot_owner_id', 'hs_attachment_ids'],
+    filters: [{
+      "propertyName": "associations.contact",
+      "operator": "EQ",
+      "value": "123147158454490"
+    }],
+    // after: 0,
+    limit: 2
+  }
+
+  try {
+    const response = await hubspotClient.crm.objects.notes.searchApi.doSearch(searchParams)
+    return response
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function getNotes(after) {
+  const limit = 100
+  // const after = undefined
+  const properties = ['hs_timestamp', 'hs_note_body', 'hubspot_owner_id', 'hs_attachment_ids']
+  const propertiesWithHistory = undefined
+  const associations = undefined
+  const archived = false
+
+  try {
+    const response = await hubspotClient.crm.objects.notes.basicApi.getPage(
+      limit, 
+      after, 
+      properties, 
+      propertiesWithHistory, 
+      associations, 
+      archived
+    )
+    return response
+  }
+  catch (err) {
+    console.error(err)
+  }
+}
+
+async function getContacts(after) {
+  const limit = 100
+  const properties = allProperties
+  const propertiesWithHistory = undefined
+  const associations = ['notes', 'companies']
+  const archived = false
+  try {
+    return await hubspotClient.crm.contacts.basicApi.getPage(
+      limit, 
+      after, 
+      properties, 
+      propertiesWithHistory, 
+      associations, 
+      archived
+    )
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function searchContacts (after) {
   try {
     // Filter and return phone phoneProperties only
     const searchParams = {
@@ -66,7 +242,7 @@ async function searchContacts (limit, after) {
           }
         ]
       }],
-      limit: limit,
+      limit: 100,
       after: after,
     }
     const response = await hubspotClient.crm.contacts.searchApi.doSearch(searchParams)
@@ -146,4 +322,9 @@ function makeTimestamp () {
   .replace('T', '_')     // Replace T with an underscore
   .replace(/:/g, '-')    // Replace colons with dashes
   .replace(/\..+/, '');  // Remove milliseconds and the trailing 'Z'
+}
+
+function generatePath (functionName) {
+  const timestamp = makeTimestamp()
+  return `${functionName}-${timestamp}.json`
 }
