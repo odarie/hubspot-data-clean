@@ -1,77 +1,34 @@
 const fs = require('node:fs/promises')
-const hubspot = require('@hubspot/api-client');
+const path = require('node:path')
+const hubspot = require('@hubspot/api-client')
 const phoneProperties = require('./phone-properties.js')
-const allProperties = require('./all-properties.js');
-const { access } = require('node:fs');
+const allProperties = require('./all-properties.js')
 
 require('dotenv').config()
 
-global.log = (obj) => console.dir(obj, { depth: null, colors: true });
+global.log = (obj) => console.dir(obj, { depth: null, colors: true })
 
 const hubspotClient = new hubspot.Client({accessToken: process.env.ACCESS_TOKEN});
 
 
 (async () => {
   try {
-
-
+    
+    // await dowloadAllAttachments()
+    
   } catch (err) {
     console.error(`An error within the main process: ${err}`)
   }
 })();
 
-async function getSignedUrlForPrivateFile(fileId) {
-  
-  const size = undefined
-  const expirationSeconds = undefined
-  const upscale = undefined
 
-  try {
-
-    const response = await hubspotClient.files.filesApi.getSignedUrl(
-      fileId, 
-      size, 
-      expirationSeconds, 
-      upscale
-    )
-    return response.url
-
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-async function downloadFile(url, path) {
-
-  try {
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.ACCESS_TOKEN}`
-      }
-    })
-
-    if (!response.ok) {
-      log(response)
-      throw new Error(`Download failed: ${response.status} ${response.statusText}`)
-    } 
-
-    const arrayBuffer = await response.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    await fs.writeFile(path, buffer)
-    return path
-
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-// Iterate a paged function, save the data 
+// Loops
 
 async function getAllPagesOfObjects (fetchFunction) {
   const allData = []
-  let after;
+  let after
 
+  // Iterate a paged function, save the data 
   do {
 
     const response = await fetchFunction(after)
@@ -100,55 +57,118 @@ async function getAllPagesOfObjects (fetchFunction) {
   return savedData
 }
 
+async function dowloadAllAttachments() {
+
+  // Make a new directory to save attachments to
+  let downloadDirectory
+
+  try {
+
+    const timestamp = makeTimestamp()
+    downloadDirectory = path.resolve(`./downloads-${timestamp}`)
+    await fs.mkdir(downloadDirectory, { recursive: true })
+    log(`Created downloads directory: ${downloadDirectory}`)
+
+  } catch (err) {
+    console.error(err)
+  }
+
+  // Retrieve data on notes
+  const notes = await readJsonFile(process.env.NOTES_PATH)
+  
+  // Make array from attachments, each el contains id and note id
+  const idsPairArray = pairAttachmentToNote(notes)
+  log(`Dowloading files: ${idsPairArray.length}`)
+
+  
+  for (const { noteId, attachmentId } of ids) {
+
+    try {
+      // Get temporary URL to download a private file
+      const result = await getSignedUrlForPrivateFile(attachmentId)
+
+      if (!result) {
+        console.error(`Missing or invalid response for attachmentId: ${attachmentId}, noteId: ${noteId}`)
+        continue
+      }
+      
+      const { name, extension, url } = result
+      // Create file path based on name, id, etc
+      const path = generateFilePath(downloadDirectory, name, attachmentId, noteId, extension)
+      await downloadFile(url, path)
+
+      log(path)
+      
+      await sleep(300)
+
+    } catch (err) {
+      console.error(`Error for attachmentId: ${attachmentId}, noteId: ${noteId}`)
+    }
+  } 
+}
+
 // API functions
+
+async function getSignedUrlForPrivateFile(fileId) {
+  
+  const size = undefined
+  const expirationSeconds = undefined
+  const upscale = undefined
+
+  try {
+
+    const response = await hubspotClient.files.filesApi.getSignedUrl(
+      fileId, 
+      size, 
+      expirationSeconds, 
+      upscale
+    )
+    return response
+
+  } catch (err) {
+    console.error(`Failed to get signed URL for fileId: ${fileId}`)
+    return null
+  }
+}
+
+async function downloadFile(url, path) {
+
+  try {
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.ACCESS_TOKEN}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Download failed for path ${path}: ${response.status} ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    await fs.writeFile(path, buffer)
+    
+
+  } catch (err) {
+    console.error(`Failed to download file at path ${path}: ${err.message}`)
+  }
+}
 
 async function searchFiles(after) {
   
-  const properties = undefined;
-  // const after = undefined;
-  const before = undefined;
-  const limit = 100;
-  const sort = undefined;
-  const ids = undefined;
-  const idLte = undefined;
-  const idGte = undefined;
-  const createdAt = undefined;
-  const createdAtLte = undefined;
-  const createdAtGte = undefined;
-  const updatedAt = undefined;
-  const updatedAtLte = undefined;
-  const updatedAtGte = undefined;
-  const name = undefined;
-  const path = undefined;
-  const parentFolderIds = undefined;
-  const size = undefined;
-  const sizeLte = undefined;
-  const sizeGte = undefined;
-  const height = undefined;
-  const heightLte = undefined;
-  const heightGte = undefined;
-  const width = undefined;
-  const widthLte = undefined;
-  const widthGte = undefined;
-  const encoding = undefined;
-  const type = undefined;
-  const extension = undefined;
-  const url = undefined;
-  const isUsableInContent = undefined;
-  const allowsAnonymousAccess = undefined;
-  const fileMd5 = undefined;
-  const expiresAt = undefined;
-  const expiresAtLte = undefined;
-  const expiresAtGte = undefined;
+  const searchParams = {
+    limit: 100,
+    after
+  }
 
-try {
-  return await hubspotClient.files.filesApi.doSearch(properties, after, before, limit, sort, ids, idLte, idGte, createdAt, createdAtLte, createdAtGte, updatedAt, updatedAtLte, updatedAtGte, name, path, parentFolderIds, size, sizeLte, sizeGte, height, heightLte, heightGte, width, widthLte, widthGte, encoding, type, extension, url, isUsableInContent, allowsAnonymousAccess, fileMd5, expiresAt, expiresAtLte, expiresAtGte);
-} catch (e) {
-  e.message === 'HTTP request failed'
-    ? console.error(JSON.stringify(e.response, null, 2))
-    : console.error(e)
-}
-
+  try {
+    return await hubspotClient.files.filesApi.doSearch(searchParams)
+  } catch (e) {
+    e.message === 'HTTP request failed'
+      ? console.error(JSON.stringify(e.response, null, 2))
+      : console.error(e)
+  }
 }
 
 async function batchReadAssociations() {
@@ -310,6 +330,19 @@ function extractPhoneNumbers(objArr) {
    return numberObjArr
 }
 
+function pairAttachmentToNote (notes) {
+  // Extract from each note attachment ids
+  // Pair each with a note id to make an array of objects
+  return notes.flatMap( note => {
+    const { hs_attachment_ids } = note.properties
+    const idArray = hs_attachment_ids ? hs_attachment_ids.split(';').filter(Boolean) : []
+    return idArray.map( attachmentId => ({
+      noteId: note.id,
+      attachmentId
+    }))
+  })
+}
+
 // Helper functions
 
 function sleep(ms) {
@@ -317,14 +350,19 @@ function sleep(ms) {
 }
 
 function makeTimestamp () {
-  const now = new Date();
+  const now = new Date()
   return now.toISOString()
   .replace('T', '_')     // Replace T with an underscore
   .replace(/:/g, '-')    // Replace colons with dashes
-  .replace(/\..+/, '');  // Remove milliseconds and the trailing 'Z'
+  .replace(/\..+/, '')  // Remove milliseconds and the trailing 'Z'
 }
 
 function generatePath (functionName) {
   const timestamp = makeTimestamp()
   return `${functionName}-${timestamp}.json`
+}
+
+function generateFilePath (dir, fileName, fileId, noteId, extension) {
+  const newFileName = `${fileName}__${fileId}__note-${noteId}.${extension}`
+  return path.join(dir, newFileName)
 }

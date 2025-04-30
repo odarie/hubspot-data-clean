@@ -6,3 +6,5 @@ node_modules/
 
 # Local data files
 *.json
+local files
+.DS_Store
