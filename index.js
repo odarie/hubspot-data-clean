@@ -9,25 +9,24 @@ dotenv.config()
 
 global.log = (obj) => console.dir(obj, { depth: null, colors: true });
 
-(async () => {
-  try {
+try {
 
-    console.log('Fetching all contact data')
-    await getAllPagesOfObjects(getContacts)
+  console.log('Fetching all contact data')
+  await getAllPagesOfObjects(getContacts)
 
-    console.log('Fetching all note data')
-    await getAllPagesOfObjects(getNotes)
+  console.log('Fetching all note data')
+  await getAllPagesOfObjects(getNotes)
 
-    console.log('Fetching all file data')
-    await getAllPagesOfObjects(searchFiles)
+  console.log('Fetching all file data')
+  await getAllPagesOfObjects(searchFiles)
 
-    console.log('Downloading all attachments...');
-    await downloadAllAttachments() 
-    
-  } catch (err) {
-    console.error(`An error within the main process: ${err}`)
-  }
-})();
+  console.log('Downloading all attachments...');
+  await downloadAllAttachments() 
+  
+} catch (err) {
+  console.error(`An error within the main process: ${err}`)
+}
+
 
 // Retrieve all contact, notes and file json data and save them to a file
 async function getAllPagesOfObjects (fetchFunction) {
