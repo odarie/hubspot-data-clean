@@ -5,4 +5,4 @@ const phoneProperties  = [
   'fourth_phone_number'
 ]
 
-module.exports = phoneProperties
+export default phoneProperties

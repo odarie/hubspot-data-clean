@@ -1,9 +1,9 @@
 
 // Utility functions for file operations
 
-const fs = require('node:fs/promises')
-const path = require('node:path')
-const { makeTimestamp } = require('./helpers')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { makeTimestamp } from './helpers.js'
 
 async function writeJsonFile(path, data) {
   const jsonString = JSON.stringify(data, null, 2)
@@ -36,7 +36,7 @@ async function generateDirectoryPath () {
     await fs.mkdir(directory, { recursive: true })
     console.log(`Created downloads directory: ${directory}`)
     return directory
-    
+
   } catch (err) {
     console.error(`Failed to create directory: ${err.message}`)
     throw err
@@ -48,7 +48,7 @@ function generateFilePath (directory, fileName, fileId, noteId, extension) {
   return path.join(directory, newFileName)
 }
 
-module.exports = {
+export {
   writeJsonFile,
   readJsonFile,
   writeFileFromBuffer,

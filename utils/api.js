@@ -1,13 +1,15 @@
 
 // This file contains functions to interact with the HubSpot API.
 
+import dotenv from 'dotenv'
+import hubspot from '@hubspot/api-client'
+import phoneProperties from '../phone-properties.js'
+import allProperties from '../all-properties.js'
+import { writeFileFromBuffer } from './file-utilities.js'
 
-const hubspot = require('@hubspot/api-client')
-const phoneProperties = require('../phone-properties.js')
-const allProperties = require('../all-properties.js')
-const { writeFileFromBuffer } = require('./file-utilities.js')
 
-require('dotenv').config()
+dotenv.config()
+
 const hubspotClient = new hubspot.Client({ accessToken: process.env.ACCESS_TOKEN })
 
 async function getSignedUrlForPrivateFile(fileId) {
@@ -178,7 +180,7 @@ async function getContactById (id) {
   }
 }
 
-module.exports = {
+export {
   getSignedUrlForPrivateFile,
   downloadFile,
   searchFiles,

@@ -13,7 +13,7 @@ function makeTimestamp () {
   .replace(/\..+/, '')  // Remove milliseconds and the trailing 'Z'
 }
 
-module.exports = {
+export {
   sleep,
   makeTimestamp
 }

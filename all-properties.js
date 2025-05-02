@@ -15,4 +15,4 @@ const allProperties = [
   'lastmodifieddate'
 ]
 
-module.exports = allProperties
+export default allProperties

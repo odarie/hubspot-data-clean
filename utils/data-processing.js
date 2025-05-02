@@ -48,7 +48,7 @@ function pairAttachmentToNote (notes) {
   })
 }
 
-module.exports = {
+export {
   createFilterGroups,
   extractPhoneNumbers,
   pairAttachmentToNote

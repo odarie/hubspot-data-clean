@@ -1,25 +1,25 @@
 
+import dotenv from 'dotenv'
+import { sleep } from './utils/helpers.js'
+import { pairAttachmentToNote } from './utils/data-processing.js'
+import { writeJsonFile, readJsonFile, generatePath, generateFilePath, generateDirectoryPath } from './utils/file-utilities.js'
+import { getSignedUrlForPrivateFile, downloadFile, searchFiles, getNotes, getContacts } from './utils/api.js'
 
-const { sleep } = require('./utils/helpers.js')
-const { pairAttachmentToNote } = require('./utils/data-processing.js')
-const { writeJsonFile, readJsonFile, generatePath, generateFilePath, generateDirectoryPath } = require('./utils/file-utilities.js')
-const { getSignedUrlForPrivateFile, downloadFile, searchFiles, getNotes, getContacts } = require('./utils/api.js')
-
-require('dotenv').config()
+dotenv.config()
 
 global.log = (obj) => console.dir(obj, { depth: null, colors: true });
 
 (async () => {
   try {
 
-    // console.log('Fetching all contact data')
-    // await getAllPagesOfObjects(getContacts)
+    console.log('Fetching all contact data')
+    await getAllPagesOfObjects(getContacts)
 
-    // console.log('Fetching all note data')
-    // await getAllPagesOfObjects(getNotes)
+    console.log('Fetching all note data')
+    await getAllPagesOfObjects(getNotes)
 
-    // console.log('Fetching all file data')
-    // await getAllPagesOfObjects(searchFiles)
+    console.log('Fetching all file data')
+    await getAllPagesOfObjects(searchFiles)
 
     console.log('Downloading all attachments...');
     await downloadAllAttachments() 
