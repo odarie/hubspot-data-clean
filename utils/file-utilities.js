@@ -16,9 +16,9 @@ async function readJsonFile(path) {
   return JSON.parse(data)
 }
 
-function generatePath (functionName) {
+function generatePath (name) {
   const timestamp = makeTimestamp()
-  return `${functionName}-${timestamp}.json`
+  return `${name}-${timestamp}.json`
 }
 
 async function writeFileFromBuffer(response, filePath) {

@@ -14,26 +14,57 @@ function createFilterGroups (propertyArray) {
 }
 
 function extractPhoneNumbers(objArr) {
-  // Leave only phone numbers and the corresponding id for each contact
+  // Leave only phone numbers among all properties
     const numberObjArr = objArr.map( e => {
 
       const { id } = e
-      const { phone, mobilephone, third_phone_number, fourth_phone_number } = e.phoneProperties
-
+      const { phone, mobilephone, third_phone_number, fourth_phone_number, firstname, lastname, type } = e.properties
       const numbers = { phone, mobilephone, third_phone_number, fourth_phone_number }
 
       const extractedNumbers = Object.fromEntries(
         Object.entries(numbers).filter(([_, value]) => value !== null)
       );
-      log(extractedNumbers)
+      
       const cleanedContact = {
         id: id,
+        type: type,
+        firstname: firstname,
+        lastname: lastname,
         phonenumbers: extractedNumbers
       }
       return cleanedContact
    })
    return numberObjArr
 }
+
+function extractForeignPhoneNumbers(objArr) {
+
+  let counter = 0
+  
+  const contacts = extractPhoneNumbers(objArr)
+
+  log(`Extracted ${contacts.length} contacts with phone numbers`)
+
+  const filteredContacts = contacts.filter(contact => {
+
+    for (const key in contact.phonenumbers) {
+
+      const value = contact.phonenumbers[key]
+      if (!value) continue
+      const cleaned = value.replace(/\D/g, '')
+      
+      // Check if the number starts with 380 or 0 and has a type
+      if (!(cleaned.startsWith('380') || cleaned.startsWith('0')) && !contact.type) {
+        log(`Untyped contact ${contact.firstname} ${contact.lastname} has a foreign number: ${cleaned}`)
+        counter++
+        return true
+      }
+    }
+  })
+  log(`Found ${counter} foreign phone numbers`)
+  return filteredContacts
+}
+
 
 function pairAttachmentToNote (notes) {
   // Extract from each note attachment ids
@@ -51,5 +82,6 @@ function pairAttachmentToNote (notes) {
 export {
   createFilterGroups,
   extractPhoneNumbers,
-  pairAttachmentToNote
+  pairAttachmentToNote,
+  extractForeignPhoneNumbers
 }

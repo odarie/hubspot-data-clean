@@ -12,6 +12,20 @@ dotenv.config()
 
 const hubspotClient = new hubspot.Client({ accessToken: process.env.ACCESS_TOKEN })
 
+async function deleteContact(id) {
+
+  try {
+    
+    hubspotClient.crm.contacts.basicApi.archive(id)
+    // Returns undefined if successful
+    return true
+  
+  } catch (err) {
+    console.error(`Failed to delete contact ${id}:`, err)
+    return false
+  }
+}
+
 async function getSignedUrlForPrivateFile(fileId) {
   
   const size = undefined
@@ -174,7 +188,7 @@ async function searchContacts (after) {
 async function getContactById (id) {
   try {
     const response = await hubspotClient.crm.contacts.basicApi.getById(id, phoneProperties)
-    log(response)
+    return response
   } catch (err) {
     console.error(`Failed to get contact by id: ${err}`)
   }
@@ -189,5 +203,6 @@ export {
   getNotes,
   getContacts,
   searchContacts,
-  getContactById
+  getContactById,
+  deleteContact
 }
