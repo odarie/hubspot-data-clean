@@ -4,7 +4,8 @@ node_modules/
 # Environment variables
 .env
 
-# Local data files
+# Local files
 *.json
 local files
 .DS_Store
+.VSCodeCounter/

@@ -12,7 +12,25 @@ dotenv.config()
 
 const hubspotClient = new hubspot.Client({ accessToken: process.env.ACCESS_TOKEN })
 
-async function deleteContact(id) {
+async function upsertBatchOfContacts (contacts)  {
+
+  try {
+
+    const response = await hubspotClient.crm.contacts.batchApi.update(contacts)
+    if (response && response.results) {
+      console.log(`Successfully upserted ${response.results.length} contacts`)
+    } else {
+      console.error('No results found in the response for the upserted contacts')
+    }
+    return response
+
+  } catch (err) { 
+    console.error(`Failed to upsert batch of contacts: ${err}`)
+    return null
+  }
+}
+
+async function deleteContact (id) {
 
   try {
     
@@ -26,7 +44,7 @@ async function deleteContact(id) {
   }
 }
 
-async function getSignedUrlForPrivateFile(fileId) {
+async function getSignedUrlForPrivateFile (fileId) {
   
   const size = undefined
   const expirationSeconds = undefined
@@ -48,7 +66,7 @@ async function getSignedUrlForPrivateFile(fileId) {
   }
 }
 
-async function downloadFile(url, filePath) {
+async function downloadFile (url, filePath) {
 
   try {
 
@@ -69,7 +87,7 @@ async function downloadFile(url, filePath) {
   }
 }
 
-async function searchFiles(after) {
+async function searchFiles (after) {
 
   try {
     const response = await hubspotClient.files.filesApi.doSearch(undefined, after, undefined, 100)
@@ -81,7 +99,7 @@ async function searchFiles(after) {
   }
 }
 
-async function batchReadAssociations() {
+async function batchReadAssociations () {
   try {
     const fromObjType = 'note'
     const toObjType = 'contact'
@@ -91,7 +109,7 @@ async function batchReadAssociations() {
   }
 }
 
-async function searchNotes() {
+async function searchNotes () {
 
   const searchParams = {
     sorts: [{ propertyName: 'createdate', direction: 'DESCENDING' }],
@@ -113,7 +131,7 @@ async function searchNotes() {
   }
 }
 
-async function getNotes(after) {
+async function getNotes (after) {
   const limit = 100
   // const after = undefined
   const properties = ['hs_timestamp', 'hs_note_body', 'hubspot_owner_id', 'hs_attachment_ids']
@@ -137,7 +155,7 @@ async function getNotes(after) {
   }
 }
 
-async function getContacts(after) {
+async function getContacts (after) {
   const limit = 100
   const properties = allProperties
   const propertiesWithHistory = undefined
@@ -204,5 +222,6 @@ export {
   getContacts,
   searchContacts,
   getContactById,
-  deleteContact
+  deleteContact,
+  upsertBatchOfContacts
 }
