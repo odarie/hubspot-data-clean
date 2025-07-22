@@ -12,17 +12,65 @@ dotenv.config()
 
 const hubspotClient = new hubspot.Client({ accessToken: process.env.ACCESS_TOKEN })
 
-async function upsertBatchOfContacts (contacts)  {
+async function createNoteToContact(text, contactId) {
+
+  try {
+    const note = {
+      properties: { 
+        hs_note_body: text,
+        hs_timestamp: new Date().toISOString(), 
+      },
+      associations: [
+        {  
+          to: { id: contactId } ,
+          types: [
+            {
+              associationCategory: 'HUBSPOT_DEFINED',
+              associationTypeId: 202
+            }
+          ]
+        }
+      ]
+    }
+
+    const response = await hubspotClient.crm.objects.notes.basicApi.create(note)
+    return response
+  } catch (err) {
+    console.error(`Failed to create note for contact ${contactId}:`, err)
+    return null
+  }
+  
+}
+
+async function upsertBatchOfContacts (inputs)  {
 
   try {
 
-    const response = await hubspotClient.crm.contacts.batchApi.update(contacts)
-    if (response && response.results) {
-      console.log(`Successfully upserted ${response.results.length} contacts`)
-    } else {
-      console.error('No results found in the response for the upserted contacts')
+    const batchSize = 100
+
+    for (let i = 0; i < inputs.length; i += batchSize) {
+      const batch = { 
+        inputs: inputs.slice(i, i + batchSize)
+      }
+      log(`Processing batch ${i / batchSize + 1} with ${batch.inputs.length} contacts`)
+
+      try {
+
+        const response = await hubspotClient.crm.contacts.batchApi.update(batch)
+        log(`Upserted contacts: ${response.results.length} in batch ${i / batchSize + 1} with status ${response.status}`)
+
+        if (response && response.results) {
+          console.log(`Successfully upserted ${response.results.length} contacts`)
+        } else {
+          console.error('No results found in the response for the upserted contacts')
+        }
+
+      } catch (err) {
+        console.error(`Failed to update batch starting at index ${i}: ${err}`)
+      }
     }
-    return response
+
+    return 'success'
 
   } catch (err) { 
     console.error(`Failed to upsert batch of contacts: ${err}`)
@@ -30,11 +78,21 @@ async function upsertBatchOfContacts (contacts)  {
   }
 }
 
+async function deleteNote (noteId) {
+  try {
+    const response = await hubspotClient.crm.objects.notes.basicApi.archive(noteId)
+    return response
+  } catch (err) {
+    console.error(`Failed to delete note ${noteId}:`, err)
+    return false
+  } 
+}
+
 async function deleteContact (id) {
 
   try {
     
-    hubspotClient.crm.contacts.basicApi.archive(id)
+    await hubspotClient.crm.contacts.basicApi.archive(id)
     // Returns undefined if successful
     return true
   
@@ -223,5 +281,7 @@ export {
   searchContacts,
   getContactById,
   deleteContact,
-  upsertBatchOfContacts
+  deleteNote,
+  upsertBatchOfContacts,
+  createNoteToContact
 }

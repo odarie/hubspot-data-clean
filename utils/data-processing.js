@@ -3,6 +3,20 @@
 
 import { log } from "console";
 
+function formatNoteBody (type, timestamp, message) {
+  
+  const title = `[${type.trim().toUpperCase()}]`
+  const formattedTimestamp = new Date(timestamp).toLocaleString('uk-UA')
+
+  const htmlBody = `
+  <strong>${title}</strong><br>
+  <em>${formattedTimestamp}</em><br><br>
+  <p>${message.trim().replace(/\n/g, '<br>')}</p>
+  `
+  return htmlBody
+
+}
+
 function createFilterGroups (propertyArray) {
   // Generate "OR" filter groups for each property
   return propertyArray.map(field => ({
@@ -159,5 +173,6 @@ export {
   pairAttachmentToNote,
   extractForeignPhoneNumbers,
   extractNonValidPhoneNumbers,
-  normalizePhoneNumbers
+  normalizePhoneNumbers,
+  formatNoteBody
 }

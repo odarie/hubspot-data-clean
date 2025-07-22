@@ -4,14 +4,23 @@
 import { searchFiles, getNotes, getContacts } from './utils/api.js'
 import { extractNonValidPhoneNumbers, extractForeignPhoneNumbers } from './utils/data-processing.js';
 import { getAllPagesOfObjects, downloadAllAttachments } from './utils/fetch-and-save.js'
-import { deleteContactsWithForeignNumbers, formatAllPhones, filterContactsWithFunction } from './utils/clean-and-save.js'
+import { joinContactsWithNotes, setTypeOfNote, deleteInvalidNotes, moveCommentToNote, deleteContactsWithForeignNumbers, formatAllPhones, filterContactsWithFunction } from './utils/clean-and-save.js'
 
 import { inspect } from 'util';
+import { join } from 'path';
 global.log = (obj) => console.log(inspect(obj, { depth: null, colors: true }));
 
 try {
 
-  await formatAllPhones(process.env.CONTACTS_PATH)
+  // await deleteInvalidNotes()
+  
+  // await joinContactsWithNotes(process.env.CONTACTS_PATH, process.env.NOTES_PATH)
+
+  // await setTypeOfNote(process.env.NOTES_PATH)
+
+  // await moveCommentToNote()
+
+  // await formatAllPhones(process.env.CONTACTS_PATH)
 
   // await filterContactsWithFunction(process.env.CONTACTS_PATH, extractForeignPhoneNumbers)
 
@@ -28,6 +37,7 @@ try {
 
   // console.log('Downloading all attachments...');
   // await downloadAllAttachments() 
+  log('Script completed successfully!');
   
 } catch (err) {
   console.error(`An error within the main process: ${err}`)

@@ -6,6 +6,7 @@ node_modules/
 
 # Local files
 *.json
-local files
+local files/
 .DS_Store
 .VSCodeCounter/
+config/
